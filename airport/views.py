@@ -2,7 +2,15 @@ from django.db.models import QuerySet
 from rest_framework import viewsets
 from rest_framework.serializers import ModelSerializer
 
-from airport.models import AirplaneType, Airplane, Airport, Route, Crew, Flight
+from airport.models import (
+    AirplaneType,
+    Airplane,
+    Airport,
+    Route,
+    Crew,
+    Flight,
+    Order
+)
 from airport.serializers import (
     AirplaneTypeSerializer,
     AirplaneSerializer,
@@ -17,6 +25,9 @@ from airport.serializers import (
     FlightSerializer,
     FlightDetailSerializer,
     FlightListSerializer,
+    OrderSerializer,
+    OrderListSerializer,
+    OrderDetailSerializer,
 )
 
 
@@ -113,5 +124,35 @@ class FlightViewSet(viewsets.ModelViewSet):
             serializer = FlightListSerializer
         elif self.action == "retrieve":
             serializer = FlightDetailSerializer
+
+        return serializer
+
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+    def get_queryset(self) -> QuerySet[Order]:
+        queryset = self.queryset.filter(user=self.request.user)
+
+        if self.action in ("retrieve", "list"):
+            queryset = queryset.prefetch_related(
+                "tickets__flight__route__source",
+                "tickets__flight__route__destination",
+                "tickets__flight__airplane__airplane_type",
+            )
+
+        return queryset
+
+    def perform_create(self, serializer) -> None:
+        serializer.save(user=self.request.user)
+
+    def get_serializer_class(self) -> ModelSerializer:
+        serializer = super().get_serializer_class()
+
+        if self.action == "list":
+            serializer = OrderListSerializer
+        elif self.action == "retrieve":
+            serializer = OrderDetailSerializer
 
         return serializer
