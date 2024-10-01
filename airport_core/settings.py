@@ -41,7 +41,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     # 3rd apps
+    "debug_toolbar",
     "rest_framework",
+    "rest_framework.authtoken",
 
     # custom apps
     "airport",
@@ -50,6 +52,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -127,7 +130,6 @@ MEDIA_ROOT = "/files/media/"
 
 MEDIA_URL = "/media/"
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
@@ -138,4 +140,14 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# User model
+
 AUTH_USER_MODEL = "user.User"
+
+# Rest settings
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication"
+    ]
+}
