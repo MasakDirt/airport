@@ -1,5 +1,6 @@
 import os.path
 import uuid
+from datetime import datetime
 from typing import Callable
 
 from django.conf import settings
@@ -70,7 +71,7 @@ class Route(models.Model):
     distance = models.PositiveIntegerField()
 
     def __str__(self) -> str:
-        return f"Route from {self.source.name} to {self.destination.name}"
+        return f"Route {self.source.name} -- {self.destination.name}"
 
     class Meta:
         constraints = [
@@ -106,6 +107,41 @@ class Flight(models.Model):
     )
     departure_time = models.DateTimeField()
     arrival_time = models.DateTimeField()
+
+    @staticmethod
+    def validate_time(
+            departure_time: datetime,
+            arrival_time: datetime,
+            error_to_raise: Callable
+    ) -> None:
+        if departure_time > arrival_time:
+            raise error_to_raise(
+                "Departure time cannot be later than arrival time"
+            )
+
+    def clean(self):
+        Flight.validate_time(
+            departure_time=self.departure_time,
+            arrival_time=self.arrival_time,
+            error_to_raise=ValidationError
+        )
+
+    def save(
+        self,
+        *args,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None,
+    ):
+        self.full_clean()
+        return super().save(
+            *args,
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
 
 
 class Ticket(models.Model):
