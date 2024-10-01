@@ -108,6 +108,11 @@ class Flight(models.Model):
     departure_time = models.DateTimeField()
     arrival_time = models.DateTimeField()
 
+    def __str__(self) -> str:
+        return (f"{self.route} - {self.airplane.name}, "
+                f"{self.departure_time.strftime('%d %b %y %H:%M')} - "
+                f"{self.arrival_time.strftime('%d %b %y %H:%M')}")
+
     @staticmethod
     def validate_time(
             departure_time: datetime,
@@ -184,7 +189,8 @@ class Ticket(models.Model):
             (seat, "seat", "seats_in_row"),
         ]:
             airplane_attr_value = getattr(airplane, airplane_attr_name)
-            if 1 <= ticket_attr_value <= airplane_attr_value:
+            if (0 < ticket_attr_value and
+                    ticket_attr_value > airplane_attr_value):
                 raise error_to_raise(
                     {
                         ticket_attr_name: f"{ticket_attr_name} "
