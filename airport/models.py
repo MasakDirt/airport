@@ -72,6 +72,14 @@ class Route(models.Model):
     def __str__(self) -> str:
         return f"Route from {self.source.name} to {self.destination.name}"
 
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["source", "destination"],
+                name="route_unique_source_and_destination"
+            )
+        ]
+
 
 class Crew(models.Model):
     first_name = models.CharField(max_length=255)
