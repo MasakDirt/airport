@@ -1,5 +1,10 @@
-from django.db.models import QuerySet
-from rest_framework import viewsets
+from django.db.models import QuerySet, F, Count
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAdminUser
+from rest_framework.request import Request
+from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 
 from airport.models import (
@@ -28,6 +33,7 @@ from airport.serializers import (
     OrderSerializer,
     OrderListSerializer,
     OrderDetailSerializer,
+    AirplaneImageSerializer,
 )
 
 
@@ -40,14 +46,37 @@ class AirplaneViewSet(viewsets.ModelViewSet):
     queryset = Airplane.objects.select_related("airplane_type")
     serializer_class = AirplaneSerializer
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        if self.action in ("list", "retrieve"):
+            queryset = queryset.prefetch_related("flights")
+
+        return queryset
+
     def get_serializer_class(self) -> ModelSerializer:
         serializer = super().get_serializer_class()
         if self.action == "list":
             serializer = AirplaneListSerializer
         elif self.action == "retrieve":
             serializer = AirplaneRetrieveSerializer
+        elif self.action == "upload_image":
+            serializer = AirplaneImageSerializer
 
         return serializer
+
+    @action(
+        methods=["POST"],
+        detail=True,
+        url_name="upload-image",
+        permission_classes=[IsAdminUser],
+    )
+    def upload_image(self, request: Request, pk: int) -> Response:
+        airplane = get_object_or_404(Airplane, pk=pk)
+        serializer = self.get_serializer(airplane, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class AirportViewSet(viewsets.ModelViewSet):
@@ -113,7 +142,14 @@ class FlightViewSet(viewsets.ModelViewSet):
                 "airplane__airplane_type",
                 "route__source",
                 "route__destination",
-            )
+            ).prefetch_related("crew")
+            if self.action == "list":
+                queryset = queryset.annotate(
+                    tickets_available=(
+                            F("airplane__rows") *
+                            F("airplane__seats_in_row") - Count("tickets")
+                    )
+                ).order_by("id")
 
         return queryset
 
@@ -139,6 +175,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             queryset = queryset.prefetch_related(
                 "tickets__flight__route__source",
                 "tickets__flight__route__destination",
+                "tickets__flight__crew",
                 "tickets__flight__airplane__airplane_type",
             )
 
