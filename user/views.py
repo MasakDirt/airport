@@ -10,10 +10,12 @@ from user.serializers import UserSerializer
 class CreateUserView(generics.CreateAPIView):
     queryset = get_user_model().objects.all()
     serializer_class = UserSerializer
+    permission_classes = ()
 
 
 class CreateTokenView(ObtainAuthToken):
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
+    permission_classes = ()
 
 
 class ManageUserView(generics.RetrieveUpdateDestroyAPIView):
