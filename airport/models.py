@@ -109,6 +109,9 @@ class Flight(models.Model):
     arrival_time = models.DateTimeField()
     crew = models.ManyToManyField(Crew, related_name="flights")
 
+    class Meta:
+        ordering = ("departure_time",)
+
     def __str__(self) -> str:
         return (f"{self.route} - {self.airplane.name}, "
                 f"{self.departure_time.strftime('%d %b %y %H:%M')} - "
@@ -233,6 +236,9 @@ class Order(models.Model):
         on_delete=models.CASCADE,
         related_name="orders"
     )
+
+    class Meta:
+        ordering = ("-created_at",)
 
     def __str__(self) -> str:
         return f"{self.user.username} order"
