@@ -224,7 +224,10 @@ class TicketDetailSerializer(TicketSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
-    created_at = serializers.DateTimeField(format="%d %B %y %H:%M")
+    created_at = serializers.DateTimeField(
+        format="%d %B %y %H:%M",
+        read_only=True
+    )
 
     class Meta:
         model = Order
