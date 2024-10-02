@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
 
 
 class AirplaneType(models.Model):
@@ -125,7 +126,7 @@ class Flight(models.Model):
     ) -> None:
         if departure_time > arrival_time:
             raise error_to_raise(
-                "Departure time cannot be later than arrival time"
+                _("Departure time cannot be later than arrival time")
             )
 
     def clean(self):
@@ -136,12 +137,12 @@ class Flight(models.Model):
         )
 
     def save(
-        self,
-        *args,
-        force_insert=False,
-        force_update=False,
-        using=None,
-        update_fields=None,
+            self,
+            *args,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None,
     ):
         self.full_clean()
         return super().save(
@@ -197,10 +198,11 @@ class Ticket(models.Model):
                     ticket_attr_value > airplane_attr_value):
                 raise error_to_raise(
                     {
-                        ticket_attr_name: f"{ticket_attr_name} "
-                                          f"must be in range: "
-                                          f"(1, {airplane_attr_name})"
-                                          f"(1, {airplane_attr_value})"
+                        ticket_attr_name: _(
+                            f"{ticket_attr_name} must be in range: "
+                            f"(1, {airplane_attr_name})"
+                            f"(1, {airplane_attr_value})"
+                        )
                     }
                 )
 
