@@ -18,6 +18,7 @@ from airport.models import (
     Flight,
     Order
 )
+from airport.ordering import MultipleOrdering
 from airport.serializers import (
     AirplaneTypeSerializer,
     AirplaneSerializer,
@@ -47,12 +48,20 @@ class AirplaneTypeViewSet(viewsets.ModelViewSet):
 class AirplaneViewSet(viewsets.ModelViewSet):
     queryset = Airplane.objects.select_related("airplane_type")
     serializer_class = AirplaneSerializer
+    ordering_fields = ["name", "airplane_type"]
 
     def get_queryset(self):
         queryset = super().get_queryset()
 
         if self.action in ("list", "retrieve"):
             queryset = queryset.prefetch_related("flights")
+
+            if self.action == "list":
+                queryset = MultipleOrdering.perform_ordering(
+                    request=self.request,
+                    ordering_fields=self.ordering_fields,
+                    queryset=queryset,
+                )
 
         return queryset
 
@@ -135,6 +144,7 @@ class CrewViewSet(viewsets.ModelViewSet):
 class FlightViewSet(viewsets.ModelViewSet):
     queryset = Flight.objects.all()
     serializer_class = FlightSerializer
+    ordering_fields = ["airplane__name", "departure_time", "arrival_time"]
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(
@@ -155,6 +165,12 @@ class FlightViewSet(viewsets.ModelViewSet):
                     )
                 ).order_by("id")
 
+                queryset = MultipleOrdering.perform_ordering(
+                    request=self.request,
+                    ordering_fields=self.ordering_fields,
+                    queryset=queryset,
+                )
+
         return queryset
 
     def get_serializer_class(self) -> FlightSerializer:
@@ -172,6 +188,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     permission_classes = (IsAuthenticated,)
+    ordering_fields = ["created_at"]
 
     def get_queryset(self) -> QuerySet[Order]:
         queryset = self.queryset.filter(user=self.request.user)
@@ -183,6 +200,13 @@ class OrderViewSet(viewsets.ModelViewSet):
                 "tickets__flight__crew",
                 "tickets__flight__airplane__airplane_type",
             )
+
+            if self.action == "list":
+                queryset = MultipleOrdering.perform_ordering(
+                    request=self.request,
+                    ordering_fields=self.ordering_fields,
+                    queryset=queryset,
+                )
 
         return queryset
 
