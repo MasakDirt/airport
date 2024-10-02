@@ -1,7 +1,7 @@
 import datetime
 
 from django.db.models import QuerySet, F, Count
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
@@ -9,6 +9,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 
+from airport.filters import FlightDateFilterBackend, RouteFilterBackend
 from airport.models import (
     AirplaneType,
     Airplane,
@@ -43,12 +44,16 @@ from airport.serializers import (
 class AirplaneTypeViewSet(viewsets.ModelViewSet):
     queryset = AirplaneType.objects.all()
     serializer_class = AirplaneTypeSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name"]
 
 
 class AirplaneViewSet(viewsets.ModelViewSet):
     queryset = Airplane.objects.select_related("airplane_type")
     serializer_class = AirplaneSerializer
-    ordering_fields = ["name", "airplane_type"]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name", "airplane_type__name"]
+    ordering_fields = ["name", "airplane_type__name"]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -93,6 +98,8 @@ class AirplaneViewSet(viewsets.ModelViewSet):
 class AirportViewSet(viewsets.ModelViewSet):
     queryset = Airport.objects.all()
     serializer_class = AirportSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name", "closest_big_city", ]
 
     def get_queryset(self) -> QuerySet[Airport]:
         queryset = super().get_queryset()
@@ -116,6 +123,13 @@ class AirportViewSet(viewsets.ModelViewSet):
 class RouteViewSet(viewsets.ModelViewSet):
     queryset = Route.objects.all()
     serializer_class = RouteSerializer
+    filter_backends = [RouteFilterBackend, filters.SearchFilter]
+    search_fields = [
+        "source__name",
+        "destination__name",
+        "source__closest_big_city",
+        "destination__closest_big_city",
+    ]
 
     def get_queryset(self) -> QuerySet[Flight]:
         queryset = super().get_queryset()
@@ -139,11 +153,21 @@ class RouteViewSet(viewsets.ModelViewSet):
 class CrewViewSet(viewsets.ModelViewSet):
     queryset = Crew.objects.all()
     serializer_class = CrewSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["last_name", "first_name"]
 
 
 class FlightViewSet(viewsets.ModelViewSet):
     queryset = Flight.objects.all()
     serializer_class = FlightSerializer
+    filter_backends = [filters.SearchFilter, FlightDateFilterBackend]
+    search_fields = [
+        "route__source__name",
+        "route__source__closest_big_city",
+        "route__destination__name",
+        "route__destination__closest_big_city",
+        "airplane__name",
+    ]
     ordering_fields = ["airplane__name", "departure_time", "arrival_time"]
 
     def get_queryset(self):
@@ -188,6 +212,13 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     permission_classes = (IsAuthenticated,)
+    filter_backends = [filters.SearchFilter]
+    search_fields = [
+        "tickets__flight__route__source__name",
+        "tickets__flight__route__source__closest_big_city",
+        "tickets__flight__route__destination__name",
+        "tickets__flight__route__destination__closest_big_city",
+    ]
     ordering_fields = ["created_at"]
 
     def get_queryset(self) -> QuerySet[Order]:
