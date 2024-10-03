@@ -17,9 +17,15 @@ from airport.models import (
     Route,
     Crew,
     Flight,
-    Order
+    Order,
 )
 from airport.ordering import MultipleOrdering
+from airport.schemas import (
+    flight_list_schema,
+    airplane_list_schema,
+    route_list_schema,
+    order_list_schema,
+)
 from airport.serializers import (
     AirplaneTypeSerializer,
     AirplaneSerializer,
@@ -80,6 +86,10 @@ class AirplaneViewSet(viewsets.ModelViewSet):
             serializer = AirplaneImageSerializer
 
         return serializer
+
+    @airplane_list_schema()
+    def list(self, request: Request, *args, **kwargs) -> Response:
+        return super().list(request, *args, **kwargs)
 
     @action(
         methods=["POST"],
@@ -149,6 +159,10 @@ class RouteViewSet(viewsets.ModelViewSet):
 
         return serializer
 
+    @route_list_schema()
+    def list(self, request: Request, *args, **kwargs) -> Response:
+        return super().list(request, *args, **kwargs)
+
 
 class CrewViewSet(viewsets.ModelViewSet):
     queryset = Crew.objects.all()
@@ -207,6 +221,10 @@ class FlightViewSet(viewsets.ModelViewSet):
 
         return serializer
 
+    @flight_list_schema()
+    def list(self, request: Request, *args, **kwargs) -> Response:
+        return super().list(request, *args, **kwargs)
+
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
@@ -253,3 +271,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             serializer = OrderDetailSerializer
 
         return serializer
+
+    @order_list_schema()
+    def list(self, request: Request, *args, **kwargs) -> Response:
+        return super().list(request, *args, **kwargs)
