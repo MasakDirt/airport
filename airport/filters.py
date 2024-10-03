@@ -80,25 +80,25 @@ class RouteFilterBackend(filters.BaseFilterBackend):
 
         queryset = _perform_filtering(
             filter_value=source_city,
-            filter_field="source__closest_big_city",
+            filter_field="source__closest_big_city__icontains",
             queryset=queryset
         )
 
         queryset = _perform_filtering(
             filter_value=destination_city,
-            filter_field="destination__closest_big_city",
+            filter_field="destination__closest_big_city__icontains",
             queryset=queryset
         )
 
         queryset = _perform_filtering(
             filter_value=source_airport,
-            filter_field="source__name",
+            filter_field="source__name__icontains",
             queryset=queryset
         )
 
         queryset = _perform_filtering(
             filter_value=destination_airport,
-            filter_field="destination__name",
+            filter_field="destination__name__icontains",
             queryset=queryset
         )
 
