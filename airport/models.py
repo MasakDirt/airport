@@ -1,14 +1,17 @@
 import os.path
 import uuid
-from datetime import datetime
-from typing import Callable
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import UniqueConstraint
 from django.utils.text import slugify
-from django.utils.translation import gettext_lazy as _
+
+from airport.validators import (
+    validate_time,
+    validate_file_size,
+    validate_ticket,
+)
 
 
 class AirplaneType(models.Model):
@@ -32,7 +35,7 @@ class Airplane(models.Model):
     name = models.CharField(max_length=255)
     rows = models.PositiveIntegerField()
     seats_in_row = models.PositiveIntegerField()
-    image = models.ImageField(null=True, upload_to=airplane_image)
+    image = models.ImageField(blank=True, null=True, upload_to=airplane_image)
     airplane_type = models.ForeignKey(
         AirplaneType,
         on_delete=models.CASCADE,
@@ -47,6 +50,29 @@ class Airplane(models.Model):
         return str(
             f"Airplane - {self.name} (capacity - "
             f"{self.capacity}, type - {self.airplane_type})"
+        )
+
+    def clean(self):
+        validate_file_size(
+            file=self.image,
+            error_to_raise=ValidationError
+        )
+
+    def save(
+            self,
+            *args,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None,
+    ):
+        self.full_clean()
+        return super().save(
+            *args,
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
         )
 
 
@@ -118,19 +144,8 @@ class Flight(models.Model):
                 f"{self.departure_time.strftime('%d %b %y %H:%M')} - "
                 f"{self.arrival_time.strftime('%d %b %y %H:%M')}")
 
-    @staticmethod
-    def validate_time(
-            departure_time: datetime,
-            arrival_time: datetime,
-            error_to_raise: Callable
-    ) -> None:
-        if departure_time > arrival_time:
-            raise error_to_raise(
-                _("Departure time cannot be later than arrival time")
-            )
-
     def clean(self):
-        Flight.validate_time(
+        validate_time(
             departure_time=self.departure_time,
             arrival_time=self.arrival_time,
             error_to_raise=ValidationError
@@ -182,32 +197,8 @@ class Ticket(models.Model):
             f"for (row - {self.row}, seat - {self.seat})"
         )
 
-    @staticmethod
-    def validate_ticket(
-            row: int,
-            seat: int,
-            airplane: Airplane,
-            error_to_raise: Callable
-    ) -> None:
-        for ticket_attr_value, ticket_attr_name, airplane_attr_name in [
-            (row, "row", "rows"),
-            (seat, "seat", "seats_in_row"),
-        ]:
-            airplane_attr_value = getattr(airplane, airplane_attr_name)
-            if (0 < ticket_attr_value and
-                    ticket_attr_value > airplane_attr_value):
-                raise error_to_raise(
-                    {
-                        ticket_attr_name: _(
-                            f"{ticket_attr_name} must be in range: "
-                            f"(1, {airplane_attr_name})"
-                            f"(1, {airplane_attr_value})"
-                        )
-                    }
-                )
-
     def clean(self) -> None:
-        Ticket.validate_ticket(
+        validate_ticket(
             self.row,
             self.seat,
             self.flight.airplane,
