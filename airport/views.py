@@ -62,7 +62,7 @@ class AirplaneViewSet(viewsets.ModelViewSet):
     ordering_fields = ["name", "airplane_type__name"]
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = self.queryset
 
         if self.action in ("list", "retrieve"):
             queryset = queryset.prefetch_related("flights")
@@ -77,12 +77,12 @@ class AirplaneViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self) -> ModelSerializer:
-        serializer = super().get_serializer_class()
+        serializer = self.serializer_class
         if self.action == "list":
             serializer = AirplaneListSerializer
         elif self.action == "retrieve":
             serializer = AirplaneRetrieveSerializer
-        elif self.action == "upload_image":
+        elif self.action == "manage_image":
             serializer = AirplaneImageSerializer
 
         return serializer
@@ -94,15 +94,26 @@ class AirplaneViewSet(viewsets.ModelViewSet):
     @action(
         methods=["POST"],
         detail=True,
-        url_name="upload-image",
+        url_name="manage-image",
         permission_classes=[IsAdminUser],
     )
-    def upload_image(self, request: Request, pk: int) -> Response:
+    def manage_image(self, request: Request, pk: int) -> Response:
+        """Set image for airplane"""
+        
         airplane = get_object_or_404(Airplane, pk=pk)
         serializer = self.get_serializer(airplane, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @manage_image.mapping.delete
+    def delete_image(self, request: Request, pk: int) -> Response:
+        """Delete airplane image"""
+        
+        airplane = get_object_or_404(Airplane, pk=pk)
+        airplane.image = None
+        airplane.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class AirportViewSet(viewsets.ModelViewSet):
@@ -112,7 +123,7 @@ class AirportViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "closest_big_city", ]
 
     def get_queryset(self) -> QuerySet[Airport]:
-        queryset = super().get_queryset()
+        queryset = self.queryset
         if self.action == "retrieve":
             queryset = queryset.prefetch_related(
                 "routes_from__destination",
@@ -122,7 +133,7 @@ class AirportViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self) -> ModelSerializer:
-        serializer = super().get_serializer_class()
+        serializer = self.serializer_class
 
         if self.action == "retrieve":
             serializer = AirportDetailSerializer
@@ -142,7 +153,7 @@ class RouteViewSet(viewsets.ModelViewSet):
     ]
 
     def get_queryset(self) -> QuerySet[Flight]:
-        queryset = super().get_queryset()
+        queryset = self.queryset
 
         if self.action in ("list", "retrieve"):
             queryset = queryset.select_related("source", "destination")
@@ -150,7 +161,7 @@ class RouteViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self) -> RouteSerializer:
-        serializer = super().get_serializer_class()
+        serializer = self.serializer_class
 
         if self.action == "list":
             serializer = RouteListSerializer
@@ -185,7 +196,7 @@ class FlightViewSet(viewsets.ModelViewSet):
     ordering_fields = ["airplane__name", "departure_time", "arrival_time"]
 
     def get_queryset(self):
-        queryset = super().get_queryset().filter(
+        queryset = self.queryset.filter(
             departure_time__gte=datetime.datetime.now(datetime.UTC)
         )
 
@@ -212,7 +223,7 @@ class FlightViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self) -> FlightSerializer:
-        serializer = super().get_serializer_class()
+        serializer = self.serializer_class
 
         if self.action == "list":
             serializer = FlightListSerializer
@@ -263,7 +274,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
     def get_serializer_class(self) -> ModelSerializer:
-        serializer = super().get_serializer_class()
+        serializer = self.serializer_class
 
         if self.action == "list":
             serializer = OrderListSerializer
