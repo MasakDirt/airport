@@ -10,7 +10,12 @@ from airport.models import (
     Crew,
     Flight,
     Ticket,
-    Order
+    Order,
+)
+from airport.validators import (
+    validate_time,
+    validate_ticket,
+    validate_file_size,
 )
 
 
@@ -56,6 +61,14 @@ class AirplaneImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Airplane
         fields = ("image",)
+
+    def validate(self, attrs: dict) -> dict:
+        validate_file_size(
+            file=attrs["image"],
+            error_to_raise=ValidationError
+        )
+
+        return attrs
 
 
 class AirportSerializer(serializers.ModelSerializer):
@@ -129,7 +142,7 @@ class FlightSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, attrs: dict) -> dict:
-        Flight.validate_time(
+        validate_time(
             departure_time=attrs["departure_time"],
             arrival_time=attrs["arrival_time"],
             error_to_raise=ValidationError
@@ -205,7 +218,7 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = ("id", "row", "seat", "flight")
 
     def validate(self, attrs):
-        Ticket.validate_ticket(
+        validate_ticket(
             attrs["row"],
             attrs["seat"],
             attrs["flight"].airplane,
