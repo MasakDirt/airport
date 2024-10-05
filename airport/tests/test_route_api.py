@@ -22,7 +22,7 @@ def sample_route(airport1: Airport, airport2: Airport) -> Route:
     return Route.objects.create(**defaults)
 
 
-def detail_url(route_id: int):
+def detail_url(route_id: int) -> str:
     return reverse("airport:route-detail", args=[route_id])
 
 
