@@ -1,7 +1,7 @@
 import datetime
 
 from django.db.models import QuerySet, F, Count
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status, filters, mixins
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
@@ -237,7 +237,12 @@ class FlightViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
 
-class OrderViewSet(viewsets.ModelViewSet):
+class OrderViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet
+):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     permission_classes = (IsAuthenticated,)
@@ -248,7 +253,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         "tickets__flight__route__destination__name",
         "tickets__flight__route__destination__closest_big_city",
     ]
-    ordering_fields = ["created_at"]
 
     def get_queryset(self) -> QuerySet[Order]:
         queryset = self.queryset.filter(user=self.request.user)
@@ -260,13 +264,6 @@ class OrderViewSet(viewsets.ModelViewSet):
                 "tickets__flight__crew",
                 "tickets__flight__airplane__airplane_type",
             )
-
-            if self.action == "list":
-                queryset = MultipleOrdering.perform_ordering(
-                    request=self.request,
-                    ordering_fields=self.ordering_fields,
-                    queryset=queryset,
-                )
 
         return queryset
 
