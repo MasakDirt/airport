@@ -588,3 +588,21 @@ class AdminFlightTest(TestCase):
         )
         for crew in getattr(crew, "crew").all():
             self.assertIn(crew.id, payload["crew"])
+
+    def test_create_departure_before_arrival(self):
+        data = get_flight_data()
+        payload = {
+            "departure_time": datetime.datetime(2026, 12, 7),
+            "arrival_time": datetime.datetime(2026, 12, 6),
+            "airplane": data["airplane1"].id,
+            "route": data["route2"].id,
+            "crew": [data["maks"].id, data["user"].id]
+        }
+
+        response = self.client.post(FLIGHT_URL, data=payload)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "Departure time cannot be later than arrival time",
+            response.data["non_field_errors"][0]
+        )
