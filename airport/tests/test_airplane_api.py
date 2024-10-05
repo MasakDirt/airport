@@ -2,7 +2,6 @@ import tempfile
 
 from PIL import Image
 from django.contrib.auth import get_user_model
-from django.db.models import ImageField
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -35,11 +34,11 @@ def sample_airplane(**additional) -> Airplane:
     return Airplane.objects.create(**defaults)
 
 
-def detail_url(airplane_id):
+def detail_url(airplane_id: int):
     return reverse("airport:airplane-detail", args=[airplane_id])
 
 
-def manage_image_url(airplane_id):
+def manage_image_url(airplane_id: int):
     return reverse("airport:airplane-manage-image", args=[airplane_id])
 
 
