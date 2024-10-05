@@ -17,7 +17,7 @@ router = DefaultRouter()
 router.register(
     "airplane_types",
     AirplaneTypeViewSet,
-    basename="airplane_type"
+    basename="airplane-type"
 )
 router.register("airplanes", AirplaneViewSet, basename="airplane")
 router.register("airports", AirportViewSet, basename="airport")
