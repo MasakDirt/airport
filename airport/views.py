@@ -30,7 +30,7 @@ from airport.serializers import (
     AirplaneTypeSerializer,
     AirplaneSerializer,
     AirplaneListSerializer,
-    AirplaneRetrieveSerializer,
+    AirplaneDetailSerializer,
     AirportSerializer,
     RouteSerializer,
     RouteListSerializer,
@@ -81,7 +81,7 @@ class AirplaneViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             serializer = AirplaneListSerializer
         elif self.action == "retrieve":
-            serializer = AirplaneRetrieveSerializer
+            serializer = AirplaneDetailSerializer
         elif self.action == "manage_image":
             serializer = AirplaneImageSerializer
 

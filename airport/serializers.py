@@ -53,7 +53,7 @@ class AirplaneListSerializer(AirplaneSerializer):
     )
 
 
-class AirplaneRetrieveSerializer(AirplaneSerializer):
+class AirplaneDetailSerializer(AirplaneSerializer):
     airplane_type = AirplaneTypeSerializer(many=False, read_only=True)
 
 
