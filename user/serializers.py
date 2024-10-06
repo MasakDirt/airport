@@ -4,6 +4,17 @@ from rest_framework import serializers
 
 
 class UserSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(
+        max_length=255,
+        read_only=False,
+        required=False
+    )
+    last_name = serializers.CharField(
+        max_length=255,
+        read_only=False,
+        required=False
+    )
+
     class Meta:
         model = get_user_model()
         fields = (
