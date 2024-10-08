@@ -1,7 +1,7 @@
 import time
 from typing import Callable
 
-import psycopg2
+import psycopg
 
 
 def reconnect(max_retries: int = 5, delay: int = 10) -> Callable:
@@ -12,7 +12,7 @@ def reconnect(max_retries: int = 5, delay: int = 10) -> Callable:
                 try:
                     func(*args, **kwargs)
                     break
-                except psycopg2.OperationalError:
+                except psycopg.OperationalError:
                     retry += 1
                     print(
                         f"Database connection failed! Trying to reconnect "
