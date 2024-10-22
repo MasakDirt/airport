@@ -161,10 +161,7 @@ class FlightDetailSerializer(FlightSerializer):
         fields = FlightSerializer.Meta.fields + ("taken_places",)
 
     def get_taken_places(self, obj: Flight) -> list[dict]:
-        return [
-            {"row": ticket.row, "seat": ticket.seat}
-            for ticket in obj.tickets.all()
-        ]
+        return [ticket for ticket in obj.tickets.values("row", "seat")]
 
 
 class FlightListSerializer(serializers.ModelSerializer):
