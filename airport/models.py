@@ -1,12 +1,9 @@
-import os.path
-import uuid
-
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import UniqueConstraint
-from django.utils.text import slugify
 
+from airport.utils import airplane_image
 from airport.validators import (
     validate_time,
     validate_file_size,
@@ -22,13 +19,6 @@ class AirplaneType(models.Model):
 
     def __str__(self) -> str:
         return self.name
-
-
-def airplane_image(instance: "Airplane", filename: str) -> str:
-    filename, extension = os.path.splitext(filename)
-    filename = f"{slugify(instance.name)}-{uuid.uuid4()}-{filename}{extension}"
-
-    return os.path.join("uploads/airplanes/", filename)
 
 
 class Airplane(models.Model):
